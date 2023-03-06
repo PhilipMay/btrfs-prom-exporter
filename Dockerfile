@@ -12,6 +12,7 @@ WORKDIR /app
 ADD . /app
 
 RUN apt-get update && \
+    apt-get -y install btrfs-progs && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -e . && \
     rm -rf /var/lib/apt/lists/*
