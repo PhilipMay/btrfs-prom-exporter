@@ -11,8 +11,9 @@ from btrfs_prom_exporter.btrfs_prom_exporter import (
     init_metrics,
     normalize_str,
     scrape_device_stats,
+    scrape_filesystem_usage,
 )
-from tests.json_fixtures import BTRFS_DEVICE_STATS_RAID_JSON, BTRFS_DEVICE_STATS_SINGLE_JSON
+from tests.json_fixtures import BTRFS_DEVICE_STATS_RAID_JSON, BTRFS_DEVICE_STATS_SINGLE_JSON, BTRFS_FILESYSTEM_USAGE
 
 
 def test_normalize_str__happy_case():
@@ -66,3 +67,32 @@ def test_scrape_device_stats_raid():
             )
             assert btrfs_device_stat_gauge is not None
             assert isclose(btrfs_device_stat_gauge, 0.0)
+
+
+def test_scrape_filesystem_usage():
+    init_metrics(30)
+    scrape_filesystem_usage(BTRFS_FILESYSTEM_USAGE, None, "/test_path")
+
+    # check stat_type used
+    btrfs_device_stat_gauge = REGISTRY.get_sample_value(
+        "btrfs_filesystem_usage_bytes",
+        labels={
+            "stat_type": "used",
+            "path": "/test_path",
+        },
+    )
+
+    assert btrfs_device_stat_gauge is not None
+    assert isclose(btrfs_device_stat_gauge, 3612965650432.0)
+
+    # check stat_type free_estimated
+    btrfs_device_stat_gauge = REGISTRY.get_sample_value(
+        "btrfs_filesystem_usage_bytes",
+        labels={
+            "stat_type": "free_estimated",
+            "path": "/test_path",
+        },
+    )
+
+    assert btrfs_device_stat_gauge is not None
+    assert isclose(btrfs_device_stat_gauge, 9192925765632.0)

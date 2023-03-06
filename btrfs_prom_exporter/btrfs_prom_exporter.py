@@ -6,6 +6,7 @@
 
 import json
 import os
+import re
 import sys
 import time
 from subprocess import PIPE, Popen
@@ -28,6 +29,9 @@ _STAT_TYPES = (
 _SCRAPE_ITERATIONS_COUNTER: Counter = Counter(
     "smart_prom_scrape_iterations_total", "Total number of SMART scrape iterations."
 )
+
+_FILESYSTEM_USED_RE = re.compile(r"^[ \t]+Used:[ \t]+(\d+)", re.MULTILINE)
+_FILESYSTEM_FREE_RE = re.compile(r"^[ \t]+Free \(estimated\):[ \t]+(\d+)", re.MULTILINE)
 
 first_scrape_interval: bool = True
 init_metrics_done: bool = False
@@ -132,13 +136,43 @@ def scrape_device_stats(result_json, returncode, monitor_path):
         print(f"WARNING: No device stats for {monitor_path}")
 
 
+def scrape_filesystem_usage(result, returncode, monitor_path):
+    """TODO: add doc."""
+    free_bytes = 0
+    free_search = re.search(_FILESYSTEM_FREE_RE, result)
+    if free_search is not None:
+        try:
+            free_bytes = float(free_search.group(1))
+        except ValueError:
+            # nothing we can do here
+            pass
+    _BTRFS_FILESYSTEM_USAGE_GAUGE.set(value=free_bytes, stat_type="free_estimated", path=monitor_path)
+
+    used_bytes = 0
+    used_search = re.search(_FILESYSTEM_USED_RE, result)
+    if used_search is not None:
+        try:
+            used_bytes = float(used_search.group(1))
+        except ValueError:
+            # nothing we can do here
+            pass
+    _BTRFS_FILESYSTEM_USAGE_GAUGE.set(value=used_bytes, stat_type="used", path=monitor_path)
+
+
 def refresh_metrics(monitor_paths: Set[str]) -> None:
     """Refresh the metrics."""
     for monitor_path in monitor_paths:
+        # scrape device status
         device_stats_result_json, returncode = call_btrfs(
             ["--format", "json", "device", "stats", monitor_path]
         )
         scrape_device_stats(device_stats_result_json, returncode, monitor_path)
+
+        # scrape filesystem usage
+        filesystem_usage_result, returncode = call_btrfs(
+            ["filesystem", "usage", "--raw", monitor_path]
+        )
+        scrape_filesystem_usage(filesystem_usage_result, returncode, monitor_path)
 
 
 def init_metrics(btrfs_info_refresh_interval):
@@ -152,6 +186,14 @@ def init_metrics(btrfs_info_refresh_interval):
             "btrfs_device_stat",
             "Btrfs device IO error statistics",
             ["device", "devid", "stat_type", "path"],
+            btrfs_info_refresh_interval * 4,
+        )
+
+        global _BTRFS_FILESYSTEM_USAGE_GAUGE
+        _BTRFS_FILESYSTEM_USAGE_GAUGE = GaugeWrapper(
+            "btrfs_filesystem_usage_bytes",
+            "Btrfs information about internal filesystem usage.",
+            ["stat_type", "path"],
             btrfs_info_refresh_interval * 4,
         )
 
@@ -191,6 +233,7 @@ def main() -> None:
         _SCRAPE_ITERATIONS_COUNTER.inc()
         first_scrape_interval = False
         _BTRFS_DEVICE_STAT_GAUGE.remove_old_metrics()  # type: ignore
+        _BTRFS_FILESYSTEM_USAGE_GAUGE.remove_old_metrics()  # type: ignore
         time.sleep(btrfs_info_refresh_interval)
 
 
