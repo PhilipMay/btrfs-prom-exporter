@@ -1,0 +1,16 @@
+{
+    "__header": {
+      "version": "1"
+    },
+    "device-stats": [
+      {
+        "device": "/dev/sda2",
+        "devid": "1",
+        "write_io_errs": "0",
+        "read_io_errs": "0",
+        "flush_io_errs": "0",
+        "corruption_errs": "0",
+        "generation_errs": "0"
+      }
+    ]
+}
