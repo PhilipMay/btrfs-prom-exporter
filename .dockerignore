@@ -1,0 +1,13 @@
+examples
+.git
+.github
+.gitignore
+.idea
+Makefile
+MANIFEST.in
+.mypy_cache
+pyproject.toml
+.pytest_cache
+setup.cfg
+*.egg-info
+tests
