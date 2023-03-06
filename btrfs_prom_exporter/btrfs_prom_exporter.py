@@ -94,7 +94,7 @@ def call_btrfs(options: List[str]) -> Tuple[str, int]:
         raise
 
 
-def scrape_device_stat(device_stat: Dict[str, str]):
+def scrape_device_stat(device_stat: Dict[str, str], monitor_path):
     """TODO: add doc."""
     device = device_stat.get("device", "unknown")
     devid = device_stat.get("devid", "unknown")
@@ -112,6 +112,7 @@ def scrape_device_stat(device_stat: Dict[str, str]):
                     device=device,
                     devid=devid,
                     stat_type=stat_type,
+                    path=monitor_path,
                 )
 
 
@@ -123,7 +124,7 @@ def scrape_device_stats(result_json, returncode, monitor_path):
         device_stats = results.get("device-stats", None)
         if isinstance(device_stats, list):
             for device_stat in device_stats:
-                scrape_device_stat(device_stat)
+                scrape_device_stat(device_stat, monitor_path)
         else:
             # TODO: what do we so here?
             pass
@@ -148,7 +149,7 @@ def init_metrics(btrfs_info_refresh_interval):
         _BTRFS_DEVICE_STAT_GAUGE = GaugeWrapper(
             "btrfs_device_stat",
             "Btrfs device IO error statistics",
-            ["device", "devid", "stat_type"],
+            ["device", "devid", "stat_type", "path"],
             btrfs_info_refresh_interval * 4,
         )
 

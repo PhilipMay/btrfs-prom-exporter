@@ -29,7 +29,7 @@ def test_normalize_str__non_str_type():
 
 def test_scrape_device_stats_single():
     init_metrics(30)
-    scrape_device_stats(BTRFS_DEVICE_STATS_SINGLE_JSON, None, None)
+    scrape_device_stats(BTRFS_DEVICE_STATS_SINGLE_JSON, None, "/test_path")
 
     for stat_type in _STAT_TYPES:
         btrfs_device_stat_gauge = REGISTRY.get_sample_value(
@@ -38,6 +38,7 @@ def test_scrape_device_stats_single():
                 "device": "/dev/sda2",
                 "devid": "1",
                 "stat_type": stat_type,
+                "path": "/test_path",
             },
         )
         assert btrfs_device_stat_gauge is not None
@@ -46,7 +47,7 @@ def test_scrape_device_stats_single():
 
 def test_scrape_device_stats_raid():
     init_metrics(30)
-    scrape_device_stats(BTRFS_DEVICE_STATS_RAID_JSON, None, None)
+    scrape_device_stats(BTRFS_DEVICE_STATS_RAID_JSON, None, "/test_path")
 
     dev_infos = [
         {"device": "/dev/sdc1", "devid": "1"},
@@ -60,6 +61,7 @@ def test_scrape_device_stats_raid():
                     "device": dev_info["device"],
                     "devid": dev_info["devid"],
                     "stat_type": stat_type,
+                    "path": "/test_path",
                 },
             )
             assert btrfs_device_stat_gauge is not None
