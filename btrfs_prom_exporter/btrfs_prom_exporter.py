@@ -135,8 +135,10 @@ def scrape_device_stats(result_json, returncode, monitor_path):
 def refresh_metrics(monitor_paths: Set[str]) -> None:
     """Refresh the metrics."""
     for monitor_path in monitor_paths:
-        result_json, returncode = call_btrfs(["--format", "json", "device", "stats", monitor_path])
-        scrape_device_stats(result_json, returncode, monitor_path)
+        device_stats_result_json, returncode = call_btrfs(
+            ["--format", "json", "device", "stats", monitor_path]
+        )
+        scrape_device_stats(device_stats_result_json, returncode, monitor_path)
 
 
 def init_metrics(btrfs_info_refresh_interval):
