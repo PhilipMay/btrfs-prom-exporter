@@ -13,7 +13,11 @@ from btrfs_prom_exporter.btrfs_prom_exporter import (
     scrape_device_stats,
     scrape_filesystem_usage,
 )
-from tests.json_fixtures import BTRFS_DEVICE_STATS_RAID_JSON, BTRFS_DEVICE_STATS_SINGLE_JSON, BTRFS_FILESYSTEM_USAGE
+from tests.json_fixtures import (
+    BTRFS_DEVICE_STATS_RAID_JSON,
+    BTRFS_DEVICE_STATS_SINGLE_JSON,
+    BTRFS_FILESYSTEM_USAGE,
+)
 
 
 def test_normalize_str__happy_case():
@@ -96,3 +100,15 @@ def test_scrape_filesystem_usage():
 
     assert btrfs_device_stat_gauge is not None
     assert isclose(btrfs_device_stat_gauge, 9192925765632.0)
+
+    # check stat_type device_missing
+    btrfs_device_stat_gauge = REGISTRY.get_sample_value(
+        "btrfs_filesystem_usage_bytes",
+        labels={
+            "stat_type": "device_missing",
+            "path": "/test_path",
+        },
+    )
+
+    assert btrfs_device_stat_gauge is not None
+    assert isclose(btrfs_device_stat_gauge, 0.0)

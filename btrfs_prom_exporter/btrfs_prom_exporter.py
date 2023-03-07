@@ -30,8 +30,11 @@ _SCRAPE_ITERATIONS_COUNTER: Counter = Counter(
     "btrfs_prom_scrape_iterations_total", "Total number of Btrfs scrape iterations."
 )
 
-_FILESYSTEM_USED_RE = re.compile(r"^[ \t]+Used:[ \t]+(\d+)", re.MULTILINE)
-_FILESYSTEM_FREE_RE = re.compile(r"^[ \t]+Free \(estimated\):[ \t]+(\d+)", re.MULTILINE)
+_FILESYSTEM_STAT_TYPE_RE_MAP = {
+    "used": re.compile(r"^[ \t]+Used:[ \t]+(\d+)", re.MULTILINE),
+    "free_estimated": re.compile(r"^[ \t]+Free \(estimated\):[ \t]+(\d+)", re.MULTILINE),
+    "device_missing": re.compile(r"^[ \t]+Device missing:[ \t]+(\d+)", re.MULTILINE),
+}
 
 first_scrape_interval: bool = True
 init_metrics_done: bool = False
@@ -138,25 +141,16 @@ def scrape_device_stats(result_json, returncode, monitor_path):
 
 def scrape_filesystem_usage(result, returncode, monitor_path):
     """TODO: add doc."""
-    free_bytes = 0
-    free_search = re.search(_FILESYSTEM_FREE_RE, result)
-    if free_search is not None:
-        try:
-            free_bytes = float(free_search.group(1))
-        except ValueError:
-            # nothing we can do here
-            pass
-    _BTRFS_FILESYSTEM_USAGE_GAUGE.set(value=free_bytes, stat_type="free_estimated", path=monitor_path)
-
-    used_bytes = 0
-    used_search = re.search(_FILESYSTEM_USED_RE, result)
-    if used_search is not None:
-        try:
-            used_bytes = float(used_search.group(1))
-        except ValueError:
-            # nothing we can do here
-            pass
-    _BTRFS_FILESYSTEM_USAGE_GAUGE.set(value=used_bytes, stat_type="used", path=monitor_path)
+    for k, v in _FILESYSTEM_STAT_TYPE_RE_MAP.items():
+        gauge_value = 0
+        gauge_value_search = re.search(v, result)
+        if gauge_value_search is not None:
+            try:
+                gauge_value = float(gauge_value_search.group(1))
+            except ValueError:
+                # nothing we can do here
+                pass
+        _BTRFS_FILESYSTEM_USAGE_GAUGE.set(value=gauge_value, stat_type=k, path=monitor_path)
 
 
 def refresh_metrics(monitor_paths: Set[str]) -> None:
