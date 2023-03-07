@@ -25,9 +25,9 @@ _STAT_TYPES = (
     "generation_errs",
 )
 
-# Counter how often the SMART values were scraped.
+# Counter how often the Btrfs values were scraped.
 _SCRAPE_ITERATIONS_COUNTER: Counter = Counter(
-    "smart_prom_scrape_iterations_total", "Total number of SMART scrape iterations."
+    "btrfs_prom_scrape_iterations_total", "Total number of Btrfs scrape iterations."
 )
 
 _FILESYSTEM_USED_RE = re.compile(r"^[ \t]+Used:[ \t]+(\d+)", re.MULTILINE)
