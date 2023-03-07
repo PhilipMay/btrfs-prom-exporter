@@ -83,7 +83,7 @@ def call_btrfs(options: List[str]) -> Tuple[str, int]:
                 if first_scrape_interval:
                     print(f"DEBUG: Output of the first scraping iteration: result: {result}")
                 return result, returncode
-            else:
+            else:  # no result
                 raise RuntimeError(
                     f"Calling {args} returned no result! "
                     f"returncode: {popen.returncode} stderr: '{stderr_text}'"
