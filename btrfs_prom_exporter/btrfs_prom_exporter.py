@@ -76,7 +76,7 @@ def call_btrfs(options: List[str]) -> Tuple[str, int]:
                 )
                 print(
                     f"WARNING: Calling {args} returned non zero returncode! "
-                    f"returncode: {popen.returncode} stderr: '{stderr_text}'"
+                    f"returncode: {returncode} stderr: '{stderr_text}'"
                 )
 
             if isinstance(result, str) and len(result) > 0:  # we have a result
